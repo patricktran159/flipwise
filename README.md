@@ -5,6 +5,8 @@ study with Again / Hard / Good ratings, and track mastery by chapter and section
 No accounts, no backend, no analytics.
 Cards and progress live only in the browser's IndexedDB on your device.
 
+How to use the app: [flipwise-manual.md](flipwise-manual.md).
+
 ## Develop (Windows)
 
 ```
