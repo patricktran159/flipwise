@@ -155,8 +155,28 @@ The repo page now shows a **Public** label next to its name.
 4. Close Safari. **Open the app from its Home Screen icon.** It opens full screen, without an
    address bar.
 
-> **Important:** import your CSV from the **Home Screen app**, not in Safari. iOS gives the installed
-> app its own separate storage, so data imported in Safari won't appear in the app.
+> **Important:** import your CSV from the **Home Screen app**, not in Safari.
+
+### Why install first, then import?
+
+It's how iPhones store data for websites:
+
+1. **The Home Screen app and Safari have separate storage.** When you add Flipwise to the Home Screen,
+   iOS gives the installed app its own storage, apart from Safari's. Cards and progress you create in a
+   Safari tab stay in Safari. The Home Screen app opens empty, even though it's the same website. If
+   you import and study in Safari first, you'd have to import again in the app and you'd lose that
+   progress.
+2. **Safari may delete website data.** For privacy, Safari can clear a website's storage if you haven't
+   opened it for about 7 days. Home Screen apps don't have this 7-day limit, so your cards and progress
+   are safer there.
+
+The installed app is also where you'll study. It's full screen and works offline. Importing there puts
+your data where you use it, in the place where it's protected.
+
+**Already imported in Safari?** Move everything across with a backup:
+
+1. In **Safari**, open Flipwise → **Settings → Export backup** → save the file to **Files**.
+2. Open the **Home Screen app** → **Settings → Restore from backup** → pick that file.
 
 ---
 
@@ -257,6 +277,7 @@ To restore, use **Settings → Restore from backup** and pick the saved file.
 | No **Run workflow** button | Make sure you clicked **Deploy to GitHub Pages** in the left list of the Actions tab. |
 | The website shows **404** | Wait 1–2 minutes after the first green run. Check the address ends with `/flipwise/`. |
 | No **Add to Home Screen** in Safari | Scroll down in the Share sheet. If it's still missing, tap **Edit Actions** and add it. |
+| The Home Screen app is empty, but I imported my cards earlier | You probably imported in Safari, which keeps separate storage. Import the CSV again in the Home Screen app, or move your progress with a backup (see [Why install first, then import?](#why-install-first-then-import)). |
 | The iPhone app shows an old version | Open it while online and tap **Reload** when asked, or swipe it away and reopen it. |
 | The CSV is rejected | The import screen lists each problem with its spreadsheet row number. Fix those rows in Excel and save with **File → Save As → CSV UTF-8**. |
 | GitHub Desktop says *"Push rejected"* or *"Newer commits on remote"* | Click **Fetch origin**, then **Pull origin**, then **Push origin**. |
