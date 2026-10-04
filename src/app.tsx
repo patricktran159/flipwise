@@ -1,5 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { ChapterDetail, Chapters } from './ui/screens/Chapters';
+import { HelpScreen } from './ui/screens/Help';
 import { Home } from './ui/screens/Home';
 import { ImportScreen } from './ui/screens/Import';
 import { ProgressScreen } from './ui/screens/Progress';
@@ -27,6 +28,7 @@ export function App() {
     case 'progress': return <ProgressScreen />;
     case 'import': return <ImportScreen />;
     case 'settings': return <SettingsScreen />;
+    case 'help': return <HelpScreen />;
     default: return <Home />;
   }
 }

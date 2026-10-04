@@ -7,7 +7,8 @@ export type Route =
   | { name: 'study' }
   | { name: 'progress' }
   | { name: 'import' }
-  | { name: 'settings' };
+  | { name: 'settings' }
+  | { name: 'help' };
 
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#\/?/, '').split('?')[0];
@@ -19,6 +20,7 @@ export function parseHash(hash: string): Route {
     case 'progress': return { name: 'progress' };
     case 'import': return { name: 'import' };
     case 'settings': return { name: 'settings' };
+    case 'help': return { name: 'help' };
     default: return { name: 'home' };
   }
 }

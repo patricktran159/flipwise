@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { statusOf } from '../../domain/scheduler';
-import type { Rating } from '../../domain/types';
+import { countDue, countDueTomorrow } from '../../domain/selection';
+import type { Rating, StudyMode } from '../../domain/types';
 import { Bar, Icon, StatusPill, plural } from '../components';
 import { navigate } from '../router';
 import { useStore } from '../store';
@@ -9,7 +10,6 @@ export function Study() {
   const { state, actions } = useStore();
   const session = state.session;
   const [revealed, setRevealed] = useState(false);
-  const bodyRef = useRef<HTMLDivElement>(null);
 
   // A "turn" advances with every rating and goes back on undo.
   const turn = session ? session.counts.again + session.counts.hard + session.counts.good : 0;
@@ -18,7 +18,7 @@ export function Study() {
     // After an undo, show the card with its answer so it can be re-rated straight away.
     setRevealed(turn < prevTurn.current);
     prevTurn.current = turn;
-    bodyRef.current?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
   }, [turn]);
 
   const cardId = session?.queue[0];
@@ -56,10 +56,11 @@ export function Study() {
 
   if (!card) return <Summary />;
 
-  const status = statusOf(state.progress.get(card.id));
+  const progress = state.progress.get(card.id);
+  const status = statusOf(progress);
   const position = Math.min(session.completed + 1, session.total);
   // Already rated earlier in this session (came back after Again or Hard).
-  const repeat = (state.progress.get(card.id)?.lastReviewedAt ?? 0) >= session.startedAt;
+  const repeat = (progress?.lastReviewedAt ?? 0) >= session.startedAt;
 
   return (
     <div class="study">
@@ -86,11 +87,13 @@ export function Study() {
         <Bar value={session.completed} total={session.total} kind="primary" thin />
       </header>
 
-      <div class="study-body" ref={bodyRef}>
+      {/* Keyed by turn so every card gets a fresh scroller starting at the top. Reusing one
+          scroller let iOS momentum from a long answer carry over and hide the next question. */}
+      <div class="study-body" key={turn}>
         <article class="flashcard" onClick={() => setRevealed(true)} aria-live="polite">
           <div class="label">
             Question · #{card.cardNumber}
-            <StatusPill status={status} />
+            <StatusPill status={status} days={progress?.goodStreak} needed={state.settings.masteryThreshold} />
           </div>
           <div class="text q">{card.question}</div>
           {revealed ? (
@@ -122,18 +125,20 @@ export function Study() {
 }
 
 function Summary() {
-  const { state, actions } = useStore();
+  const { state, stats, actions } = useStore();
   const session = state.session!;
   const { again, hard, good } = session.counts;
+  const due = countDue(state.cards, state.progress, state.settings.resurfaceDays, Date.now());
+  const dueTomorrow = due ? 0 : countDueTomorrow(state.cards, state.progress, state.settings.resurfaceDays, Date.now());
+  const needed = state.settings.masteryThreshold;
 
   async function done() {
     await actions.endSession();
     navigate('/', true);
   }
 
-  async function another() {
-    const n = await actions.startSession({ kind: 'review' }, session.shuffled);
-    if (!n) await done();
+  async function next(mode: StudyMode) {
+    if (!(await actions.startSession(mode, session.shuffled))) await done();
   }
 
   return (
@@ -158,9 +163,23 @@ function Summary() {
       {session.newlyMastered.length > 0 && (
         <p class="card ok-card">Newly mastered: <strong>{plural(session.newlyMastered.length, 'card')}</strong></p>
       )}
+      <p class="card small">
+        A card is mastered after <strong>Good on {plural(needed, 'separate day')}</strong>{needed > 1 && ', so mastery always takes more than one day'}.
+        Only the first Good each day counts. Cards you got right today come back for review tomorrow.{' '}
+        <button class="link-btn" onClick={() => navigate('/help')}>How it works</button>
+      </p>
+      <p class="card small" role="status">
+        <strong>What's next: </strong>
+        {due > 0
+          ? `${plural(due, 'card')} still due for review today.`
+          : stats.overall.new > 0
+            ? `Review is done for today${dueTomorrow ? ` (${plural(dueTomorrow, 'card')} due tomorrow)` : ''}. Learn more new cards, or stop here.`
+            : `You're all done for today${dueTomorrow ? `. ${plural(dueTomorrow, 'card')} will be due tomorrow` : ''}.`}
+      </p>
       <div class="stack">
         <button class="btn primary big" onClick={done}>Done</button>
-        <button class="btn" onClick={another}>Start another review</button>
+        {due > 0 && <button class="btn" onClick={() => next({ kind: 'review' })}>Review {plural(due, 'due card')}</button>}
+        {due === 0 && stats.overall.new > 0 && <button class="btn" onClick={() => next({ kind: 'new' })}>Learn new cards</button>}
       </div>
     </main>
   );

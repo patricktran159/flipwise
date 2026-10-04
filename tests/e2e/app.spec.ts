@@ -44,7 +44,7 @@ test('imports a CSV and shows overall progress and chapters', async ({ page }) =
   await page.getByRole('button', { name: /Chapters/ }).click();
   await expect(page.locator('.chapter-row')).toHaveCount(2);
   await expect(page.locator('.chapter-row').first()).toContainText('Chapter 1: Data Management');
-  await expect(page.locator('.chapter-row').first()).toContainText('3 cards · 0 mastered');
+  await expect(page.locator('.chapter-row').first()).toContainText('3 cards · 0 studied · 0 mastered');
 
   await page.locator('.chapter-row').first().click();
   await expect(page.getByRole('button', { name: /All Sections/ })).toHaveAttribute('aria-pressed', 'true');
@@ -105,12 +105,12 @@ test('study flow: reveal, Again requeues, Good completes, undo, summary', async 
   // Home reflects the reviews: 3 learning, 2 new, 3 reviewed today.
   await expect(page.locator('.legend')).toContainText('Learning3');
   await expect(page.locator('.legend')).toContainText('New2');
-  await expect(page.getByText('Reviewed today:')).toContainText('3 cards');
+  await expect(page.getByText('Studied today:')).toContainText('3 cards');
 });
 
 test('Hard and Again feed the Difficult and Missed reviews', async ({ page }) => {
   await importAndConfirm(page, 'sample-v1.csv');
-  await page.getByRole('button', { name: /Start Review/ }).click();
+  await page.getByRole('button', { name: /Learn New Cards/ }).click();
   await reveal(page);
   await page.getByRole('button', { name: /Hard/ }).click();
   await reveal(page);
@@ -118,28 +118,64 @@ test('Hard and Again feed the Difficult and Missed reviews', async ({ page }) =>
   await page.getByRole('button', { name: 'Close session' }).click();
 
   await expect(page.getByRole('button', { name: /Resume session/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Review Difficult/ })).toContainText('1');
-  await expect(page.getByRole('button', { name: /Review Missed/ })).toContainText('1');
+  await expect(page.getByRole('button', { name: /Difficult Cards/ })).toContainText('1');
+  await expect(page.getByRole('button', { name: /Missed Cards/ })).toContainText('1');
 
   page.on('dialog', (d) => d.accept());
-  await page.getByRole('button', { name: /Review Missed/ }).click();
+  await page.getByRole('button', { name: /Missed Cards/ }).click();
   await expect(page.getByText('Card 1 of 1')).toBeVisible();
   await expect(question(page)).toContainText('DIKW');
 });
 
-test('session survives a reload and can be resumed', async ({ page }) => {
+test('home guides review first, then new cards; cards got right today wait for tomorrow', async ({ page }) => {
   await importAndConfirm(page, 'sample-v1.csv');
-  await page.getByRole('button', { name: /Start Review/ }).click();
+  const review = page.getByRole('region', { name: 'Review' });
+  await expect(review).toContainText('Nothing to review yet');
+  await expect(page.getByRole('button', { name: /Learn New Cards/ })).toContainText('Chapter 1: Data Management · all 3 new cards');
+
+  await page.getByRole('button', { name: /Learn New Cards/ }).click();
+  await expect(page.locator('.status-pill')).toHaveText('New');
   await reveal(page);
   await page.getByRole('button', { name: /Good/ }).click();
-  await expect(page.getByText('Card 2 of 5')).toBeVisible();
+  await reveal(page);
+  await page.getByRole('button', { name: /Again/ }).click();
+  await page.getByRole('button', { name: 'Close session (you can resume it later)' }).click();
+
+  // The Good card is done for today; the Again card is still due.
+  await expect(review.getByRole('button', { name: /Start Review/ })).toContainText('1 card due');
+  page.on('dialog', (d) => d.accept());
+  await review.getByRole('button', { name: /Start Review/ }).click();
+  await expect(page.getByText('Card 1 of 1')).toBeVisible();
+  await expect(question(page)).toContainText('DIKW');
+  await expect(page.locator('.status-pill')).toHaveText('Learning · day 0 of 3');
+  await reveal(page);
+  await page.getByRole('button', { name: /Good/ }).click();
+  await expect(page.getByText('Good on 3 separate days')).toBeVisible();
+  await page.getByRole('button', { name: 'Done' }).click();
+
+  await expect(review).toContainText('All caught up');
+  await expect(review).toContainText('2 cards will be due tomorrow.');
+
+  await page.getByRole('button', { name: 'How Flipwise works' }).first().click();
+  await expect(page.getByRole('heading', { name: 'How Flipwise works', level: 1 })).toBeVisible();
+  await expect(page.getByText('Good on 3 separate days').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Back to Home' }).click();
+  await expect(page.getByRole('button', { name: /Learn New Cards/ })).toContainText('Chapter 1: Data Management · last new card');
+});
+
+test('session survives a reload and can be resumed', async ({ page }) => {
+  await importAndConfirm(page, 'sample-v1.csv');
+  await page.getByRole('button', { name: /Learn New Cards/ }).click();
+  await reveal(page);
+  await page.getByRole('button', { name: /Good/ }).click();
+  await expect(page.getByText('Card 2 of 3')).toBeVisible();
   await page.reload();
-  await expect(page.getByText('Card 2 of 5')).toBeVisible();
+  await expect(page.getByText('Card 2 of 3')).toBeVisible();
 });
 
 test('replacing the CSV keeps progress for matching cards', async ({ page }) => {
   await importAndConfirm(page, 'sample-v1.csv');
-  await page.getByRole('button', { name: /Start Review/ }).click();
+  await page.getByRole('button', { name: /Learn New Cards/ }).click();
   // Rate Ch1#1 Good, Ch1#2 Hard, Ch1#3 (removed in v2) Good.
   for (const r of ['Good', 'Hard', 'Good']) {
     await reveal(page);
@@ -180,7 +216,7 @@ test('settings change text size and theme', async ({ page }) => {
 
 test('the study screen fits an iPhone without horizontal scrolling', async ({ page }) => {
   await importAndConfirm(page, 'sample-v1.csv');
-  await page.getByRole('button', { name: /Start Review/ }).click();
+  await page.getByRole('button', { name: /Learn New Cards/ }).click();
   await reveal(page);
   const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }));
   expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
@@ -208,7 +244,7 @@ test('works offline after the first load', async ({ page, context, browserName }
   await expect(page.getByText('line two, with a comma.')).toBeVisible();
   await page.getByRole('button', { name: /Good/ }).click();
   await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByText('Reviewed today:')).toContainText('1 card');
+  await expect(page.getByText('Studied today:')).toContainText('1 card');
   await page.goto('./#/progress');
-  await expect(page.locator('.tile').filter({ hasText: 'Reviewed today' })).toContainText('1');
+  await expect(page.getByText('Studied today: 1 card, 1 rating')).toBeVisible();
 });

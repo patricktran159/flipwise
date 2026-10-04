@@ -68,7 +68,10 @@ so you can switch between exam CSVs. Prefix chapter names with the exam (e.g. "A
 | Hard | Difficult, streak reset | Returns once at the end of the queue |
 | Good | Streak +1 (once per day; not on a day it was failed); Mastered at 3 by default; clears *missed* | Done |
 
-Start Review picks: missed → difficult → learning → new → mastered cards not seen for 7+ days.
+Home is a two-step daily flow (explained in-app under Help). **Review** takes only due cards: missed → difficult → learning (not yet
+rated today, since only one Good a day counts) → mastered cards not seen for 7+ days. **Learn New Cards**
+then introduces unseen cards one chapter per session (a chapter up to 1.5× the session size is taken whole).
+Chapters, Missed and Difficult are extra practice.
 
 ## Manual iPhone checklist
 
