@@ -1,0 +1,8 @@
+"Chapter","CardNumber","Section","Question","Answer"
+"Chapter 1: Data Management","1","CDMP Exam Focus","How does DAMA-DMBOK define Data Management?","The development, execution, and supervision of plans, policies, programs, and practices."
+"Chapter 1: Data Management","2","CDMP Exam Focus","Why does DMBOK criticize the ""DIKW"" pyramid?","It's flawed: data doesn't just exist (it takes knowledge to create data)."
+"Chapter 1: Data Management","3","Key Definitions & Terminology","What does Data ROT stand for?","Redundant, Obsolete, Trivial [ROT]."
+
+"Chapter 2: Data Handling Ethics","1","CDMP Exam Focus","Name the core ethical principles.","Respect for persons, beneficence, justice."
+"Chapter 2: Data Handling Ethics","2","Overview","What is data ethics?","A multi-line answer:
+line two, with a comma."
